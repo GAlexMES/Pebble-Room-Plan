@@ -1,6 +1,15 @@
 #include <pebble.h>
 
 static Window *s_main_window;
+static TextLayer *s_time_layer;
+
+static void main_window_load(Window *window) {
+
+}
+
+static void main_window_unload(Window *window) {
+
+}
 
 static void init() {
   s_main_window = window_create();
@@ -13,20 +22,11 @@ static void init() {
 }
 
 static void deinit() {
-
+  window_destroy(s_main_window);
 }
 
 int main(void) {
   init();
   app_event_loop();
   deinit();
-}
-
-
-static void main_window_load(Window *window) {
-
-}
-
-static void main_window_unload(Window *window) {
-
 }
