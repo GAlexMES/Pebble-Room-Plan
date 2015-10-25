@@ -6,6 +6,8 @@ static Window *s_main_window;
 static TextLayer *s_current_room;
 static TextLayer *s_next_room;
 static TextLayer *s_time_layer;
+static char *current_room_text [32];
+static char *next_room_text [32];
 
 // Will be called, when a new message from the phone arrives
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
@@ -19,8 +21,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     snprintf(current_room_buffer, sizeof(current_room_buffer), "%s", current_room_tuple->value->cstring);
     snprintf(next_room_buffer, sizeof(next_room_buffer), "%s", next_room_tuple->value->cstring);
 
-    text_layer_set_text(s_current_room, current_room_buffer);
-    text_layer_set_text(s_next_room, next_room_buffer);
+    *next_room_text = next_room_buffer;
+    *current_room_text = current_room_buffer;
+    text_layer_set_text(s_current_room, *current_room_text);
+    text_layer_set_text(s_next_room, *next_room_text);
   }
 }
 
@@ -39,7 +43,7 @@ static void main_window_load(Window *window) {
   
   text_layer_set_background_color(s_current_room, GColorClear);
   text_layer_set_text_color(s_current_room, GColorBlack);
-  text_layer_set_text(s_current_room, "");
+  text_layer_set_text(s_current_room, *current_room_text);
   text_layer_set_font(s_current_room, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
   text_layer_set_text_alignment(s_current_room, GTextAlignmentCenter);
   
@@ -51,7 +55,7 @@ static void main_window_load(Window *window) {
   
   text_layer_set_background_color(s_next_room, GColorClear);
   text_layer_set_text_color(s_next_room, GColorBlack);
-  text_layer_set_text(s_next_room, "");
+  text_layer_set_text(s_next_room, *next_room_text);
   text_layer_set_font(s_next_room, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
   text_layer_set_text_alignment(s_next_room, GTextAlignmentCenter);
 
@@ -85,6 +89,23 @@ static void main_window_unload(Window *window) {
 
 // initialize importent content
 static void init() {
+  
+  static char current_room_buffer[32];
+  static char next_room_buffer[32];
+  
+  
+  // tries to load saved rooms from pebble
+  if (persist_exists(KEY_CURRENT_ROOM)) {
+    persist_read_string(KEY_CURRENT_ROOM,current_room_buffer, sizeof(current_room_buffer));
+    *current_room_text = current_room_buffer;
+  }
+  
+  if (persist_exists(KEY_NEXT_ROOM)) {
+     persist_read_string(KEY_NEXT_ROOM,next_room_buffer, sizeof(next_room_buffer));
+    *next_room_text = next_room_buffer;
+  }
+  
+  
   // creates the main window
   s_main_window = window_create();
   window_set_window_handlers(s_main_window, (WindowHandlers) {
@@ -105,10 +126,12 @@ static void init() {
 
 // will destroy the main window
 static void deinit() {
+  // save the rooms on pebble
+  persist_write_string(KEY_CURRENT_ROOM, *current_room_text);
+  persist_write_string(KEY_NEXT_ROOM, *next_room_text);
+  
   window_destroy(s_main_window);
 }
-
-
 
 int main(void) {
   init();
